@@ -29,33 +29,33 @@ describe('GetThreadDetailUseCase', () => {
           username: 'dicoding',
           date: '2021-08-08T07:22:33.555Z',
           content: 'isi komentar 1',
-          ['is_delete']: false,
+          isDelete: false,
         },
         {
           id: 'comment-124',
           username: 'johndoe',
           date: '2021-08-08T07:21:33.555Z',
           content: 'isi komentar 2',
-          ['is_delete']: true,
+          isDelete: true,
         },
       ]));
     mockReplyRepository.getRepliesByThreadId = vi.fn()
       .mockImplementation(() => Promise.resolve([
         {
           id: 'reply-123',
-          ['comment_id']: 'comment-123',
+          commentId: 'comment-123',
           username: 'johndoe',
           date: '2021-08-08T07:23:33.555Z',
           content: 'isi balasan 1',
-          ['is_delete']: false,
+          isDelete: false,
         },
         {
           id: 'reply-124',
-          ['comment_id']: 'comment-123',
+          commentId: 'comment-123',
           username: 'dicoding',
           date: '2021-08-08T07:24:33.555Z',
           content: 'isi balasan 2',
-          ['is_delete']: true,
+          isDelete: true,
         },
       ]));
 

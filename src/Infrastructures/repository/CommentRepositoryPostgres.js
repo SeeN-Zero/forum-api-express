@@ -1,7 +1,6 @@
 import CommentRepository from '../../Domains/comments/CommentRepository.js';
 import AddedComment from '../../Domains/comments/entities/AddedComment.js';
 import NotFoundError from '../../Commons/exceptions/NotFoundError.js';
-import AuthorizationError from '../../Commons/exceptions/AuthorizationError.js';
 
 class CommentRepositoryPostgres extends CommentRepository {
   constructor(pool, idGenerator) {
@@ -50,7 +49,7 @@ class CommentRepositoryPostgres extends CommentRepository {
     }
   }
 
-  async verifyCommentOwner(commentId, owner) {
+  async getCommentOwnerById(commentId) {
     const query = {
       text: 'SELECT owner FROM comments WHERE id = $1',
       values: [commentId],
@@ -58,9 +57,11 @@ class CommentRepositoryPostgres extends CommentRepository {
 
     const result = await this._pool.query(query);
 
-    if (result.rows[0].owner !== owner) {
-      throw new AuthorizationError('anda tidak berhak mengakses resource ini');
+    if (!result.rowCount) {
+      throw new NotFoundError('komentar tidak ditemukan');
     }
+
+    return result.rows[0].owner;
   }
 
   async softDeleteComment(commentId) {
@@ -86,8 +87,11 @@ class CommentRepositoryPostgres extends CommentRepository {
     const result = await this._pool.query(query);
 
     return result.rows.map((row) => ({
-      ...row,
+      id: row.id,
+      username: row.username,
       date: new Date(row.date).toISOString(),
+      content: row.content,
+      isDelete: row.is_delete,
     }));
   }
 }

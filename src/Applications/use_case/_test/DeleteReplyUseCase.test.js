@@ -22,8 +22,8 @@ describe('DeleteReplyUseCase', () => {
       .mockImplementation(() => Promise.resolve());
     mockReplyRepository.verifyReplyExists = vi.fn()
       .mockImplementation(() => Promise.resolve());
-    mockReplyRepository.verifyReplyOwner = vi.fn()
-      .mockImplementation(() => Promise.resolve());
+    mockReplyRepository.getReplyOwnerById = vi.fn()
+      .mockImplementation(() => Promise.resolve('user-123'));
     mockReplyRepository.softDeleteReply = vi.fn()
       .mockImplementation(() => Promise.resolve());
 
@@ -41,10 +41,7 @@ describe('DeleteReplyUseCase', () => {
       useCasePayload.threadId,
     );
     expect(mockReplyRepository.verifyReplyExists).toBeCalledWith(useCasePayload.replyId);
-    expect(mockReplyRepository.verifyReplyOwner).toBeCalledWith(
-      useCasePayload.replyId,
-      useCasePayload.owner,
-    );
+    expect(mockReplyRepository.getReplyOwnerById).toBeCalledWith(useCasePayload.replyId);
     expect(mockReplyRepository.softDeleteReply).toBeCalledWith(useCasePayload.replyId);
   });
 });

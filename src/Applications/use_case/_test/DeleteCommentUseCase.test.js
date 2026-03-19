@@ -17,8 +17,8 @@ describe('DeleteCommentUseCase', () => {
       .mockImplementation(() => Promise.resolve());
     mockCommentRepository.verifyCommentExists = vi.fn()
       .mockImplementation(() => Promise.resolve());
-    mockCommentRepository.verifyCommentOwner = vi.fn()
-      .mockImplementation(() => Promise.resolve());
+    mockCommentRepository.getCommentOwnerById = vi.fn()
+      .mockImplementation(() => Promise.resolve('user-123'));
     mockCommentRepository.softDeleteComment = vi.fn()
       .mockImplementation(() => Promise.resolve());
 
@@ -31,7 +31,7 @@ describe('DeleteCommentUseCase', () => {
 
     expect(mockThreadRepository.verifyThreadExists).toBeCalledWith(useCasePayload.threadId);
     expect(mockCommentRepository.verifyCommentExists).toBeCalledWith(useCasePayload.commentId);
-    expect(mockCommentRepository.verifyCommentOwner).toBeCalledWith(useCasePayload.commentId, useCasePayload.owner);
+    expect(mockCommentRepository.getCommentOwnerById).toBeCalledWith(useCasePayload.commentId);
     expect(mockCommentRepository.softDeleteComment).toBeCalledWith(useCasePayload.commentId);
   });
 });

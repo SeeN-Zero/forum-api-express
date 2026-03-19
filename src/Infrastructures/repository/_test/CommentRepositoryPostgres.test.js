@@ -2,7 +2,6 @@ import UsersTableTestHelper from '../../../../tests/UsersTableTestHelper.js';
 import ThreadsTableTestHelper from '../../../../tests/ThreadsTableTestHelper.js';
 import CommentsTableTestHelper from '../../../../tests/CommentsTableTestHelper.js';
 import NotFoundError from '../../../Commons/exceptions/NotFoundError.js';
-import AuthorizationError from '../../../Commons/exceptions/AuthorizationError.js';
 import NewComment from '../../../Domains/comments/entities/NewComment.js';
 import AddedComment from '../../../Domains/comments/entities/AddedComment.js';
 import pool from '../../database/postgres/pool.js';
@@ -106,24 +105,16 @@ describe('CommentRepositoryPostgres', () => {
     });
   });
 
-  describe('verifyCommentOwner function', () => {
-    it('should throw AuthorizationError when owner is not valid', async () => {
-      await UsersTableTestHelper.addUser({ id: 'user-123' });
-      await UsersTableTestHelper.addUser({ id: 'user-321', username: 'johndoe' });
-      await ThreadsTableTestHelper.addThread({ id: 'thread-123', owner: 'user-123' });
-      await CommentsTableTestHelper.addComment({
-        id: 'comment-123',
-        threadId: 'thread-123',
-        owner: 'user-123',
-      });
+  describe('getCommentOwnerById function', () => {
+    it('should throw NotFoundError when comment not found', async () => {
       const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {});
 
-      await expect(commentRepositoryPostgres.verifyCommentOwner('comment-123', 'user-321'))
+      await expect(commentRepositoryPostgres.getCommentOwnerById('comment-404'))
         .rejects
-        .toThrowError(AuthorizationError);
+        .toThrowError(NotFoundError);
     });
 
-    it('should not throw AuthorizationError when owner is valid', async () => {
+    it('should return owner id correctly', async () => {
       await UsersTableTestHelper.addUser({ id: 'user-123' });
       await ThreadsTableTestHelper.addThread({ id: 'thread-123', owner: 'user-123' });
       await CommentsTableTestHelper.addComment({
@@ -133,10 +124,8 @@ describe('CommentRepositoryPostgres', () => {
       });
       const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {});
 
-      await expect(commentRepositoryPostgres.verifyCommentOwner('comment-123', 'user-123'))
-        .resolves
-        .not
-        .toThrowError(AuthorizationError);
+      const owner = await commentRepositoryPostgres.getCommentOwnerById('comment-123');
+      expect(owner).toEqual('user-123');
     });
   });
 
@@ -180,7 +169,7 @@ describe('CommentRepositoryPostgres', () => {
         username: 'dicoding',
         date: '2021-08-08T07:22:33.555Z',
         content: 'isi komentar',
-        ['is_delete']: false,
+        isDelete: false,
       });
     });
   });

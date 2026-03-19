@@ -1,3 +1,5 @@
+import AuthorizationError from '../../Commons/exceptions/AuthorizationError.js';
+
 class DeleteCommentUseCase {
   constructor({ threadRepository, commentRepository }) {
     this._threadRepository = threadRepository;
@@ -9,7 +11,12 @@ class DeleteCommentUseCase {
 
     await this._threadRepository.verifyThreadExists(threadId);
     await this._commentRepository.verifyCommentExists(commentId);
-    await this._commentRepository.verifyCommentOwner(commentId, owner);
+    const commentOwner = await this._commentRepository.getCommentOwnerById(commentId);
+
+    if (commentOwner !== owner) {
+      throw new AuthorizationError('anda tidak berhak mengakses resource ini');
+    }
+
     await this._commentRepository.softDeleteComment(commentId);
   }
 }

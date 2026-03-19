@@ -15,10 +15,10 @@ class GetThreadDetailUseCase {
 
     const mappedComments = comments.map((comment) => {
       const commentReplies = replies
-        .filter((reply) => reply.comment_id === comment.id)
+        .filter((reply) => reply.commentId === comment.id)
         .map((reply) => ({
           id: reply.id,
-          content: reply.is_delete ? '**balasan telah dihapus**' : reply.content,
+          content: reply.isDelete ? '**balasan telah dihapus**' : reply.content,
           date: reply.date,
           username: reply.username,
         }))
@@ -28,7 +28,7 @@ class GetThreadDetailUseCase {
         id: comment.id,
         username: comment.username,
         date: comment.date,
-        content: comment.is_delete ? '**komentar telah dihapus**' : comment.content,
+        content: comment.isDelete ? '**komentar telah dihapus**' : comment.content,
         replies: commentReplies,
       });
     }).sort((a, b) => new Date(a.date) - new Date(b.date));

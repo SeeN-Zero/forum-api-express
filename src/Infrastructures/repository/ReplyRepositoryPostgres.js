@@ -1,7 +1,6 @@
 import ReplyRepository from '../../Domains/replies/ReplyRepository.js';
 import AddedReply from '../../Domains/replies/entities/AddedReply.js';
 import NotFoundError from '../../Commons/exceptions/NotFoundError.js';
-import AuthorizationError from '../../Commons/exceptions/AuthorizationError.js';
 
 class ReplyRepositoryPostgres extends ReplyRepository {
   constructor(pool, idGenerator) {
@@ -35,7 +34,7 @@ class ReplyRepositoryPostgres extends ReplyRepository {
     }
   }
 
-  async verifyReplyOwner(replyId, owner) {
+  async getReplyOwnerById(replyId) {
     const query = {
       text: 'SELECT owner FROM replies WHERE id = $1',
       values: [replyId],
@@ -43,9 +42,11 @@ class ReplyRepositoryPostgres extends ReplyRepository {
 
     const result = await this._pool.query(query);
 
-    if (result.rows[0].owner !== owner) {
-      throw new AuthorizationError('anda tidak berhak mengakses resource ini');
+    if (!result.rowCount) {
+      throw new NotFoundError('balasan tidak ditemukan');
     }
+
+    return result.rows[0].owner;
   }
 
   async softDeleteReply(replyId) {
@@ -72,8 +73,12 @@ class ReplyRepositoryPostgres extends ReplyRepository {
     const result = await this._pool.query(query);
 
     return result.rows.map((row) => ({
-      ...row,
+      id: row.id,
+      commentId: row.comment_id,
+      username: row.username,
       date: new Date(row.date).toISOString(),
+      content: row.content,
+      isDelete: row.is_delete,
     }));
   }
 }
