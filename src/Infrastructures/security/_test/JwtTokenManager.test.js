@@ -13,16 +13,17 @@ describe('JwtTokenManager', () => {
         username: 'dicoding',
       };
       const mockJwtToken = {
-        sign: vi.fn().mockImplementation(() => 'mock_token'),
+        sign: vi.fn().mockImplementation((_, key) => `signed-with-${key}`),
       };
       const jwtTokenManager = new JwtTokenManager(mockJwtToken);
+      const expectedAccessToken = `signed-with-${config.auth.accessTokenKey}`;
 
       // Action
       const accessToken = await jwtTokenManager.createAccessToken(payload);
 
       // Assert
       expect(mockJwtToken.sign).toBeCalledWith(payload, config.auth.accessTokenKey);
-      expect(accessToken).toEqual('mock_token');
+      expect(accessToken).toEqual(expectedAccessToken);
     });
   });
 
@@ -33,16 +34,17 @@ describe('JwtTokenManager', () => {
         username: 'dicoding',
       };
       const mockJwtToken = {
-        sign: vi.fn().mockImplementation(() => 'mock_token'),
+        sign: vi.fn().mockImplementation((_, key) => `signed-with-${key}`),
       };
       const jwtTokenManager = new JwtTokenManager(mockJwtToken);
+      const expectedRefreshToken = `signed-with-${config.auth.refreshTokenKey}`;
 
       // Action
       const refreshToken = await jwtTokenManager.createRefreshToken(payload);
 
       // Assert
       expect(mockJwtToken.sign).toBeCalledWith(payload, config.auth.refreshTokenKey);
-      expect(refreshToken).toEqual('mock_token');
+      expect(refreshToken).toEqual(expectedRefreshToken);
     });
   });
 

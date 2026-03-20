@@ -33,6 +33,8 @@ describe('RefreshAuthenticationUseCase', () => {
     const useCasePayload = {
       refreshToken: 'some_refresh_token',
     };
+    const decodedPayload = { username: 'dicoding', id: 'user-123' };
+    const expectedAccessToken = `access-token-for-${decodedPayload.id}`;
     const mockAuthenticationRepository = new AuthenticationRepository();
     const mockAuthenticationTokenManager = new AuthenticationTokenManager();
     // Mocking
@@ -41,9 +43,9 @@ describe('RefreshAuthenticationUseCase', () => {
     mockAuthenticationTokenManager.verifyRefreshToken = vi.fn()
       .mockImplementation(() => Promise.resolve());
     mockAuthenticationTokenManager.decodePayload = vi.fn()
-      .mockImplementation(() => Promise.resolve({ username: 'dicoding', id: 'user-123' }));
+      .mockImplementation(() => Promise.resolve(decodedPayload));
     mockAuthenticationTokenManager.createAccessToken = vi.fn()
-      .mockImplementation(() => Promise.resolve('some_new_access_token'));
+      .mockImplementation(({ id }) => Promise.resolve(`access-token-for-${id}`));
     // Create the use case instace
     const refreshAuthenticationUseCase = new RefreshAuthenticationUseCase({
       authenticationRepository: mockAuthenticationRepository,
@@ -61,7 +63,7 @@ describe('RefreshAuthenticationUseCase', () => {
     expect(mockAuthenticationTokenManager.decodePayload)
       .toBeCalledWith(useCasePayload.refreshToken);
     expect(mockAuthenticationTokenManager.createAccessToken)
-      .toBeCalledWith({ username: 'dicoding', id: 'user-123' });
-    expect(accessToken).toEqual('some_new_access_token');
+      .toBeCalledWith(decodedPayload);
+    expect(accessToken).toEqual(expectedAccessToken);
   });
 });

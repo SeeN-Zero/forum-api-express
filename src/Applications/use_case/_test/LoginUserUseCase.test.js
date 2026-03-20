@@ -13,9 +13,11 @@ describe('GetAuthenticationUseCase', () => {
       username: 'dicoding',
       password: 'secret',
     };
-    const mockedAuthentication = new NewAuth({
-      accessToken: 'access_token',
-      refreshToken: 'refresh_token',
+    const accessTokenFromManager = 'token::access::user-123';
+    const refreshTokenFromManager = 'token::refresh::user-123';
+    const expectedAddedAuthentication = new NewAuth({
+      accessToken: 'token::access::user-123',
+      refreshToken: 'token::refresh::user-123',
     });
     const mockUserRepository = new UserRepository();
     const mockAuthenticationRepository = new AuthenticationRepository();
@@ -28,9 +30,9 @@ describe('GetAuthenticationUseCase', () => {
     mockPasswordHash.comparePassword = vi.fn()
       .mockImplementation(() => Promise.resolve());
     mockAuthenticationTokenManager.createAccessToken = vi.fn()
-      .mockImplementation(() => Promise.resolve(mockedAuthentication.accessToken));
+      .mockImplementation(() => Promise.resolve(accessTokenFromManager));
     mockAuthenticationTokenManager.createRefreshToken = vi.fn()
-      .mockImplementation(() => Promise.resolve(mockedAuthentication.refreshToken));
+      .mockImplementation(() => Promise.resolve(refreshTokenFromManager));
     mockUserRepository.getIdByUsername = vi.fn()
       .mockImplementation(() => Promise.resolve('user-123'));
     mockAuthenticationRepository.addToken = vi.fn()
@@ -48,10 +50,7 @@ describe('GetAuthenticationUseCase', () => {
     const actualAuthentication = await loginUserUseCase.execute(useCasePayload);
 
     // Assert
-    expect(actualAuthentication).toEqual(new NewAuth({
-      accessToken: 'access_token',
-      refreshToken: 'refresh_token',
-    }));
+    expect(actualAuthentication).toEqual(expectedAddedAuthentication);
     expect(mockUserRepository.getPasswordByUsername)
       .toBeCalledWith('dicoding');
     expect(mockPasswordHash.comparePassword)
@@ -63,6 +62,6 @@ describe('GetAuthenticationUseCase', () => {
     expect(mockAuthenticationTokenManager.createRefreshToken)
       .toBeCalledWith({ username: 'dicoding', id: 'user-123' });
     expect(mockAuthenticationRepository.addToken)
-      .toBeCalledWith(mockedAuthentication.refreshToken);
+      .toBeCalledWith('token::refresh::user-123');
   });
 });
