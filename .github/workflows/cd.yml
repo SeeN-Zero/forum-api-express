@@ -40,16 +40,18 @@ jobs:
 
             mkdir -p "$APP_DIR" || exit 1
 
-            git -C "$APP_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1 && IS_GIT_REPO=1 || IS_GIT_REPO=0
-            case "$IS_GIT_REPO" in
-              1)
+            IS_GIT_REPO=0
+            if git -C "$APP_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+              IS_GIT_REPO=1
+            fi
+
+            if [ "$IS_GIT_REPO" = "1" ]; then
               echo "[CD] existing git repo found, pull latest"
               cd "$APP_DIR"
               git fetch origin "$BRANCH" || exit 1
               git checkout "$BRANCH" || exit 1
               git pull origin "$BRANCH" || exit 1
-              ;;
-              *)
+            else
               if [ -n "$(ls -A "$APP_DIR")" ]; then
                 echo "APP_DIR exists but is not a git repository and not empty: $APP_DIR"
                 exit 1
@@ -57,8 +59,7 @@ jobs:
               echo "[CD] cloning repository"
               git clone --depth 1 --branch "$BRANCH" "$REPO_URL" "$APP_DIR" || exit 1
               cd "$APP_DIR"
-              ;;
-            esac
+            fi
 
             echo "[CD] checking runtime binaries"
             command -v node || exit 1
