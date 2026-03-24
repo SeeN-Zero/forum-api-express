@@ -1,7 +1,5 @@
 # Forum API
 
-TEST CI
-
 REST API forum diskusi berbasis Node.js dengan pendekatan **Clean Architecture**.  
 Project ini mencakup fitur autentikasi, thread, komentar, balasan, dan like komentar, dengan PostgreSQL sebagai database.
 
