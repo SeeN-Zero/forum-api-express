@@ -36,23 +36,27 @@ class JwtTokenManager extends AuthenticationTokenManager {
   }
 
   async verifyRefreshToken(token) {
+    let payload;
     try {
-      const payload = this._jwt.verify(token, config.auth.refreshTokenKey);
-      if (payload?.tokenType === 'access') {
-        throw new Error('invalid token type');
-      }
+      payload = this._jwt.verify(token, config.auth.refreshTokenKey);
     } catch {
+      throw new InvariantError('refresh token tidak valid');
+    }
+
+    if (payload?.tokenType === 'access') {
       throw new InvariantError('refresh token tidak valid');
     }
   }
 
   async verifyAccessToken(token) {
+    let payload;
     try {
-      const payload = this._jwt.verify(token, config.auth.accessTokenKey);
-      if (payload?.tokenType === 'refresh') {
-        throw new Error('invalid token type');
-      }
+      payload = this._jwt.verify(token, config.auth.accessTokenKey);
     } catch {
+      throw new AuthenticationError('access token tidak valid');
+    }
+
+    if (payload?.tokenType === 'refresh') {
       throw new AuthenticationError('access token tidak valid');
     }
   }
