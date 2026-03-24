@@ -21,7 +21,7 @@ const DatabaseTestHelper = {
   },
 
   migrateSchema() {
-    execSync('npm run migrate:test:up', {
+    execSync('npm run migrate:test', {
       stdio: 'inherit',
       env: { ...process.env, NODE_ENV: 'test' },
     });

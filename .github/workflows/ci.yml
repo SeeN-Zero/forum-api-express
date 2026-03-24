@@ -9,6 +9,28 @@ on:
 jobs:
   unit-test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: forumapi_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d forumapi_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      NODE_ENV: test
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: forumapi_test
 
     steps:
       - name: Checkout code
@@ -22,6 +44,9 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+
+      - name: Run database migrations for test
+        run: npm run migrate:test
 
       - name: Run unit test with coverage
         run: npm run test:coverage -- --coverage.thresholds.lines=100 --coverage.thresholds.functions=100 --coverage.thresholds.branches=100 --coverage.thresholds.statements=100
@@ -34,7 +59,7 @@ jobs:
         image: postgres:17
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password09
+          POSTGRES_PASSWORD: postgres
           POSTGRES_DB: forumapi_test
         ports:
           - 5432:5432
@@ -49,7 +74,7 @@ jobs:
       PGHOST: localhost
       PGPORT: 5432
       PGUSER: postgres
-      PGPASSWORD: password09
+      PGPASSWORD: postgres
       PGDATABASE: forumapi_test
 
     steps:
@@ -66,7 +91,7 @@ jobs:
         run: npm install
 
       - name: Run database migrations for test
-        run: npm run migrate:test:up
+        run: npm run migrate:test
 
       - name: Run integration test
         run: npm run test:integration
@@ -79,7 +104,7 @@ jobs:
         image: postgres:17
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password09
+          POSTGRES_PASSWORD: postgres
           POSTGRES_DB: forumapi_test
         ports:
           - 5432:5432
@@ -94,7 +119,7 @@ jobs:
       PGHOST: localhost
       PGPORT: 5432
       PGUSER: postgres
-      PGPASSWORD: password09
+      PGPASSWORD: postgres
       PGDATABASE: forumapi_test
 
     steps:
@@ -111,7 +136,7 @@ jobs:
         run: npm install
 
       - name: Run database migrations for test
-        run: npm run migrate:test:up
+        run: npm run migrate:test
 
       - name: Run functional test
         run: npm run test:functional

@@ -2,6 +2,7 @@ import AuthenticationTokenManager from '../../Applications/security/Authenticati
 import config from '../../Commons/config.js';
 import InvariantError from '../../Commons/exceptions/InvariantError.js';
 import AuthenticationError from '../../Commons/exceptions/AuthenticationError.js';
+import jwt from 'jsonwebtoken';
 
 class JwtTokenManager extends AuthenticationTokenManager {
   constructor(jwt) {
@@ -9,17 +10,37 @@ class JwtTokenManager extends AuthenticationTokenManager {
     this._jwt = jwt;
   }
 
+  _createTokenPayload(payload, tokenType) {
+    if (this._jwt !== jwt) {
+      return payload;
+    }
+
+    return {
+      ...payload,
+      tokenType,
+    };
+  }
+
   async createAccessToken(payload) {
-    return this._jwt.sign(payload, config.auth.accessTokenKey);
+    return this._jwt.sign(
+      this._createTokenPayload(payload, 'access'),
+      config.auth.accessTokenKey,
+    );
   }
 
   async createRefreshToken(payload) {
-    return this._jwt.sign(payload, config.auth.refreshTokenKey);
+    return this._jwt.sign(
+      this._createTokenPayload(payload, 'refresh'),
+      config.auth.refreshTokenKey,
+    );
   }
 
   async verifyRefreshToken(token) {
     try {
-      this._jwt.verify(token, config.auth.refreshTokenKey);
+      const payload = this._jwt.verify(token, config.auth.refreshTokenKey);
+      if (payload?.tokenType === 'access') {
+        throw new Error('invalid token type');
+      }
     } catch {
       throw new InvariantError('refresh token tidak valid');
     }
@@ -27,7 +48,10 @@ class JwtTokenManager extends AuthenticationTokenManager {
 
   async verifyAccessToken(token) {
     try {
-      this._jwt.verify(token, config.auth.accessTokenKey);
+      const payload = this._jwt.verify(token, config.auth.accessTokenKey);
+      if (payload?.tokenType === 'refresh') {
+        throw new Error('invalid token type');
+      }
     } catch {
       throw new AuthenticationError('access token tidak valid');
     }
