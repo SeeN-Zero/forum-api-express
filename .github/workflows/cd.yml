@@ -18,8 +18,10 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script_stop: true
+          debug: true
           script: |
-            set -e
+            set -ex
+            echo "[CD] start deploy"
             APP_DIR="${{ secrets.APP_DIR }}"
             if [ -z "$APP_DIR" ]; then
               echo "APP_DIR secret is empty"
@@ -32,10 +34,14 @@ jobs:
 
             REPO_URL="https://github.com/${{ github.repository }}.git"
             BRANCH="${{ github.ref_name }}"
+            echo "[CD] APP_DIR=$APP_DIR"
+            echo "[CD] BRANCH=$BRANCH"
+            echo "[CD] user=$(whoami), home=$HOME"
 
             mkdir -p "$APP_DIR"
 
             if [ -d "$APP_DIR/.git" ]; then
+              echo "[CD] existing git repo found, pull latest"
               cd "$APP_DIR"
               git fetch origin "$BRANCH"
               git checkout "$BRANCH"
@@ -45,11 +51,21 @@ jobs:
                 echo "APP_DIR exists but is not a git repository and not empty: $APP_DIR"
                 exit 1
               fi
+              echo "[CD] cloning repository"
               git clone --depth 1 --branch "$BRANCH" "$REPO_URL" "$APP_DIR"
               cd "$APP_DIR"
             fi
 
+            echo "[CD] checking runtime binaries"
+            command -v node
+            command -v npm
+            command -v pm2
+
+            echo "[CD] installing dependencies"
             npm install
+            echo "[CD] running migration"
             npm run migrate:up
+            echo "[CD] restarting pm2 app"
             pm2 restart app || pm2 start npm --name "app" -- start
             pm2 save
+            echo "[CD] deploy complete"
