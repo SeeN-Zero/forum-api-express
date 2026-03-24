@@ -1,12 +1,20 @@
-import ThreadsHandler from './handler.js';
+import ThreadHandler from './ThreadHandler.js';
+import CommentHandler from './CommentHandler.js';
+import ReplyHandler from './ReplyHandler.js';
+import CommentLikeHandler from './CommentLikeHandler.js';
 import createThreadsRouter from './routes.js';
 import authenticationMiddleware from '../middleware/authentication.js';
 
 const threads = (container) => {
-  const handler = new ThreadsHandler(container);
+  const handlers = {
+    threadHandler: new ThreadHandler(container),
+    commentHandler: new CommentHandler(container),
+    replyHandler: new ReplyHandler(container),
+    commentLikeHandler: new CommentLikeHandler(container),
+  };
   const authentication = authenticationMiddleware(container);
 
-  return createThreadsRouter(handler, authentication);
+  return createThreadsRouter(handlers, authentication);
 };
 
 export default threads;
