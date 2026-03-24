@@ -23,43 +23,22 @@ jobs:
             set -x
             echo "[CD] start deploy"
             APP_DIR="${{ secrets.APP_DIR }}"
-            if [ -z "$APP_DIR" ]; then
-              echo "APP_DIR secret is empty"
-              exit 1
-            fi
+            [ -n "$APP_DIR" ] || { echo "APP_DIR secret is empty"; exit 1; }
+            APP_DIR="${APP_DIR/#\~/$HOME}"
+            PROJECT_DIR="$APP_DIR/forum-api-express"
 
-            if [ "${APP_DIR#~}" != "$APP_DIR" ]; then
-              APP_DIR="$HOME/${APP_DIR#~/}"
-            fi
-
-            REPO_URL="https://github.com/${{ github.repository }}.git"
             BRANCH="${{ github.ref_name }}"
             echo "[CD] APP_DIR=$APP_DIR"
+            echo "[CD] PROJECT_DIR=$PROJECT_DIR"
             echo "[CD] BRANCH=$BRANCH"
             echo "[CD] user=$(whoami), home=$HOME"
 
-            mkdir -p "$APP_DIR" || exit 1
-
-            IS_GIT_REPO=0
-            if git -C "$APP_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-              IS_GIT_REPO=1
-            fi
-
-            if [ "$IS_GIT_REPO" = "1" ]; then
-              echo "[CD] existing git repo found, pull latest"
-              cd "$APP_DIR"
-              git fetch origin "$BRANCH" || exit 1
-              git checkout "$BRANCH" || exit 1
-              git pull origin "$BRANCH" || exit 1
-            else
-              if [ -n "$(ls -A "$APP_DIR")" ]; then
-                echo "APP_DIR exists but is not a git repository and not empty: $APP_DIR"
-                exit 1
-              fi
-              echo "[CD] cloning repository"
-              git clone --depth 1 --branch "$BRANCH" "$REPO_URL" "$APP_DIR" || exit 1
-              cd "$APP_DIR"
-            fi
+            [ -d "$PROJECT_DIR" ] || { echo "PROJECT_DIR not found: $PROJECT_DIR"; exit 1; }
+            cd "$PROJECT_DIR" || exit 1
+            git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "Not a git repository: $PROJECT_DIR"; exit 1; }
+            git fetch origin "$BRANCH" || exit 1
+            git checkout "$BRANCH" || exit 1
+            git pull origin "$BRANCH" || exit 1
 
             echo "[CD] checking runtime binaries"
             command -v node || exit 1
