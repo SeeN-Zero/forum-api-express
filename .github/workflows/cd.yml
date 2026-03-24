@@ -26,11 +26,9 @@ jobs:
               exit 1
             fi
 
-            case "$APP_DIR" in
-              "~"*)
-                APP_DIR="${HOME}${APP_DIR#\~}"
-                ;;
-            esac
+            if [ "${APP_DIR#~}" != "$APP_DIR" ]; then
+              APP_DIR="$HOME/${APP_DIR#~/}"
+            fi
 
             if [ ! -d "$APP_DIR" ]; then
               echo "APP_DIR not found: $APP_DIR"
