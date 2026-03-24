@@ -31,6 +31,9 @@ jobs:
       PGUSER: postgres
       PGPASSWORD: postgres
       PGDATABASE: forumapi_test
+      ACCESS_TOKEN_KEY: secret
+      REFRESH_TOKEN_KEY: secret
+      ACCESS_TOKEN_AGE: 3000
 
     steps:
       - name: Checkout code
@@ -76,6 +79,9 @@ jobs:
       PGUSER: postgres
       PGPASSWORD: postgres
       PGDATABASE: forumapi_test
+      ACCESS_TOKEN_KEY: secret
+      REFRESH_TOKEN_KEY: secret
+      ACCESS_TOKEN_AGE: 3000
 
     steps:
       - name: Checkout code
@@ -121,6 +127,9 @@ jobs:
       PGUSER: postgres
       PGPASSWORD: postgres
       PGDATABASE: forumapi_test
+      ACCESS_TOKEN_KEY: secret
+      REFRESH_TOKEN_KEY: secret
+      ACCESS_TOKEN_AGE: 3000
 
     steps:
       - name: Checkout code
