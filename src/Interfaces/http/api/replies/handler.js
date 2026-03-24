@@ -1,7 +1,7 @@
 import AddReplyUseCase from '../../../../Applications/use_case/AddReplyUseCase.js';
 import DeleteReplyUseCase from '../../../../Applications/use_case/DeleteReplyUseCase.js';
 
-class ReplyHandler {
+class RepliesHandler {
   constructor(container) {
     this._container = container;
 
@@ -46,4 +46,4 @@ class ReplyHandler {
   }
 }
 
-export default ReplyHandler;
+export default RepliesHandler;

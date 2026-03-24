@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import createServer from './Infrastructures/http/createServer.js';
 import container from './Infrastructures/container.js';
 import config from './Commons/config.js';
