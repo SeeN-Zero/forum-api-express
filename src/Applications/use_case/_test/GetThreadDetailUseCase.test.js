@@ -30,6 +30,7 @@ describe('GetThreadDetailUseCase', () => {
           date: '2021-08-08T07:22:33.555Z',
           content: 'isi komentar 1',
           isDelete: false,
+          likeCount: 2,
         },
         {
           id: 'comment-124',
@@ -37,6 +38,7 @@ describe('GetThreadDetailUseCase', () => {
           date: '2021-08-08T07:21:33.555Z',
           content: 'isi komentar 2',
           isDelete: true,
+          likeCount: 0,
         },
       ]));
     mockReplyRepository.getRepliesByThreadId = vi.fn()
@@ -79,6 +81,7 @@ describe('GetThreadDetailUseCase', () => {
           username: 'johndoe',
           date: '2021-08-08T07:21:33.555Z',
           content: '**komentar telah dihapus**',
+          likeCount: 0,
           replies: [],
         },
         {
@@ -86,6 +89,7 @@ describe('GetThreadDetailUseCase', () => {
           username: 'dicoding',
           date: '2021-08-08T07:22:33.555Z',
           content: 'isi komentar 1',
+          likeCount: 2,
           replies: [
             {
               id: 'reply-123',

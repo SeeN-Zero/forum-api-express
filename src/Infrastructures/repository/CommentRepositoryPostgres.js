@@ -76,10 +76,18 @@ class CommentRepositoryPostgres extends CommentRepository {
   async getCommentsByThreadId(threadId) {
     const query = {
       text: `
-        SELECT comments.id, users.username, comments.date::text AS date, comments.content, comments.is_delete
+        SELECT
+          comments.id,
+          users.username,
+          comments.date::text AS date,
+          comments.content,
+          comments.is_delete,
+          COALESCE(COUNT(user_comment_likes.id), 0)::int AS like_count
         FROM comments
         JOIN users ON users.id = comments.owner
+        LEFT JOIN user_comment_likes ON user_comment_likes.comment_id = comments.id
         WHERE comments.thread_id = $1
+        GROUP BY comments.id, users.username, comments.date, comments.content, comments.is_delete
       `,
       values: [threadId],
     };
@@ -92,6 +100,7 @@ class CommentRepositoryPostgres extends CommentRepository {
       date: new Date(row.date).toISOString(),
       content: row.content,
       isDelete: row.is_delete,
+      likeCount: Number(row.like_count),
     }));
   }
 }

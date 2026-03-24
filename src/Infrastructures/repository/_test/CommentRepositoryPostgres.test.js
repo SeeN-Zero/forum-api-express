@@ -1,6 +1,7 @@
 import UsersTableTestHelper from '../../../../tests/UsersTableTestHelper.js';
 import ThreadsTableTestHelper from '../../../../tests/ThreadsTableTestHelper.js';
 import CommentsTableTestHelper from '../../../../tests/CommentsTableTestHelper.js';
+import UserCommentLikesTableTestHelper from '../../../../tests/UserCommentLikesTableTestHelper.js';
 import NotFoundError from '../../../Commons/exceptions/NotFoundError.js';
 import NewComment from '../../../Domains/comments/entities/NewComment.js';
 import AddedComment from '../../../Domains/comments/entities/AddedComment.js';
@@ -9,6 +10,7 @@ import CommentRepositoryPostgres from '../CommentRepositoryPostgres.js';
 
 describe('CommentRepositoryPostgres', () => {
   afterEach(async () => {
+    await UserCommentLikesTableTestHelper.cleanTable();
     await CommentsTableTestHelper.cleanTable();
     await ThreadsTableTestHelper.cleanTable();
     await UsersTableTestHelper.cleanTable();
@@ -170,7 +172,34 @@ describe('CommentRepositoryPostgres', () => {
         date: '2021-08-08T07:22:33.555Z',
         content: 'isi komentar',
         isDelete: false,
+        likeCount: 0,
       });
+    });
+
+    it('should return comments with like count', async () => {
+      await UsersTableTestHelper.addUser({ id: 'user-123', username: 'dicoding' });
+      await UsersTableTestHelper.addUser({ id: 'user-456', username: 'johndoe' });
+      await ThreadsTableTestHelper.addThread({ id: 'thread-123', owner: 'user-123' });
+      await CommentsTableTestHelper.addComment({
+        id: 'comment-123',
+        threadId: 'thread-123',
+        owner: 'user-123',
+      });
+      await UserCommentLikesTableTestHelper.addLike({
+        id: 'like-123',
+        userId: 'user-123',
+        commentId: 'comment-123',
+      });
+      await UserCommentLikesTableTestHelper.addLike({
+        id: 'like-456',
+        userId: 'user-456',
+        commentId: 'comment-123',
+      });
+      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {});
+
+      const comments = await commentRepositoryPostgres.getCommentsByThreadId('thread-123');
+
+      expect(comments[0].likeCount).toEqual(2);
     });
   });
 });

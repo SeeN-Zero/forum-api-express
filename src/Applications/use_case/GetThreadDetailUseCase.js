@@ -29,6 +29,7 @@ class GetThreadDetailUseCase {
         username: comment.username,
         date: comment.date,
         content: comment.isDelete ? '**komentar telah dihapus**' : comment.content,
+        likeCount: comment.likeCount,
         replies: commentReplies,
       });
     }).sort((a, b) => new Date(a.date) - new Date(b.date));

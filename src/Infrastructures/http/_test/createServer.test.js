@@ -5,6 +5,7 @@ import AuthenticationsTableTestHelper from '../../../../tests/AuthenticationsTab
 import ThreadsTableTestHelper from '../../../../tests/ThreadsTableTestHelper.js';
 import CommentsTableTestHelper from '../../../../tests/CommentsTableTestHelper.js';
 import RepliesTableTestHelper from '../../../../tests/RepliesTableTestHelper.js';
+import UserCommentLikesTableTestHelper from '../../../../tests/UserCommentLikesTableTestHelper.js';
 import container from '../../container.js';
 import createServer from '../createServer.js';
 import AuthenticationTokenManager from '../../../Applications/security/AuthenticationTokenManager.js';
@@ -15,6 +16,7 @@ describe('HTTP server', () => {
   });
 
   afterEach(async () => {
+    await UserCommentLikesTableTestHelper.cleanTable();
     await RepliesTableTestHelper.cleanTable();
     await CommentsTableTestHelper.cleanTable();
     await ThreadsTableTestHelper.cleanTable();
@@ -557,6 +559,87 @@ describe('HTTP server', () => {
     });
   });
 
+  describe('when PUT /threads/{threadId}/comments/{commentId}/likes', () => {
+    it('should response 200 and toggle like comment', async () => {
+      const threadPayload = {
+        title: 'judul thread',
+        body: 'isi thread',
+      };
+      const commentPayload = {
+        content: 'isi komentar',
+      };
+      const app = await createServer(container);
+      const accessToken = await getAccessToken(app);
+      const addThreadResponse = await request(app)
+        .post('/threads')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send(threadPayload);
+      const threadId = addThreadResponse.body.data.addedThread.id;
+      const addCommentResponse = await request(app)
+        .post(`/threads/${threadId}/comments`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send(commentPayload);
+      const commentId = addCommentResponse.body.data.addedComment.id;
+
+      const firstResponse = await request(app)
+        .put(`/threads/${threadId}/comments/${commentId}/likes`)
+        .set('Authorization', `Bearer ${accessToken}`);
+      const secondResponse = await request(app)
+        .put(`/threads/${threadId}/comments/${commentId}/likes`)
+        .set('Authorization', `Bearer ${accessToken}`);
+
+      expect(firstResponse.status).toEqual(200);
+      expect(firstResponse.body.status).toEqual('success');
+      expect(secondResponse.status).toEqual(200);
+      expect(secondResponse.body.status).toEqual('success');
+    });
+
+    it('should response 401 when request without authentication', async () => {
+      const app = await createServer(container);
+
+      const response = await request(app).put('/threads/thread-123/comments/comment-123/likes');
+
+      expect(response.status).toEqual(401);
+      expect(response.body.status).toEqual('fail');
+      expect(response.body.message).toEqual('Missing authentication');
+    });
+
+    it('should response 404 when thread not found', async () => {
+      const app = await createServer(container);
+      const accessToken = await getAccessToken(app);
+
+      const response = await request(app)
+        .put('/threads/thread-404/comments/comment-123/likes')
+        .set('Authorization', `Bearer ${accessToken}`);
+
+      expect(response.status).toEqual(404);
+      expect(response.body.status).toEqual('fail');
+      expect(response.body.message).toEqual('thread tidak ditemukan');
+    });
+
+    it('should response 404 when comment not found', async () => {
+      const threadPayload = {
+        title: 'judul thread',
+        body: 'isi thread',
+      };
+      const app = await createServer(container);
+      const accessToken = await getAccessToken(app);
+      const addThreadResponse = await request(app)
+        .post('/threads')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send(threadPayload);
+      const threadId = addThreadResponse.body.data.addedThread.id;
+
+      const response = await request(app)
+        .put(`/threads/${threadId}/comments/comment-404/likes`)
+        .set('Authorization', `Bearer ${accessToken}`);
+
+      expect(response.status).toEqual(404);
+      expect(response.body.status).toEqual('fail');
+      expect(response.body.message).toEqual('komentar tidak ditemukan');
+    });
+  });
+
   describe('when GET /threads/{threadId}', () => {
     it('should response 200 and thread detail', async () => {
       const threadPayload = {
@@ -585,6 +668,7 @@ describe('HTTP server', () => {
       expect(response.body.data.thread).toBeDefined();
       expect(response.body.data.thread.id).toEqual(threadId);
       expect(response.body.data.thread.comments).toHaveLength(1);
+      expect(response.body.data.thread.comments[0].likeCount).toEqual(0);
       expect(response.body.data.thread.comments[0].replies).toEqual([]);
     });
 
@@ -635,6 +719,50 @@ describe('HTTP server', () => {
       expect(response.status).toEqual(200);
       expect(response.body.status).toEqual('success');
       expect(response.body.data.thread.comments[0].replies[0].content).toEqual('**balasan telah dihapus**');
+    });
+
+    it('should show like count correctly', async () => {
+      const threadPayload = {
+        title: 'judul thread',
+        body: 'isi thread',
+      };
+      const commentPayload = {
+        content: 'isi komentar',
+      };
+      const app = await createServer(container);
+      const firstUserAccessToken = await getAccessToken(app, {
+        username: 'userone',
+        password: 'secret',
+        fullname: 'User One',
+      });
+      const secondUserAccessToken = await getAccessToken(app, {
+        username: 'usertwo',
+        password: 'secret',
+        fullname: 'User Two',
+      });
+      const addThreadResponse = await request(app)
+        .post('/threads')
+        .set('Authorization', `Bearer ${firstUserAccessToken}`)
+        .send(threadPayload);
+      const threadId = addThreadResponse.body.data.addedThread.id;
+      const addCommentResponse = await request(app)
+        .post(`/threads/${threadId}/comments`)
+        .set('Authorization', `Bearer ${firstUserAccessToken}`)
+        .send(commentPayload);
+      const commentId = addCommentResponse.body.data.addedComment.id;
+
+      await request(app)
+        .put(`/threads/${threadId}/comments/${commentId}/likes`)
+        .set('Authorization', `Bearer ${firstUserAccessToken}`);
+      await request(app)
+        .put(`/threads/${threadId}/comments/${commentId}/likes`)
+        .set('Authorization', `Bearer ${secondUserAccessToken}`);
+
+      const response = await request(app).get(`/threads/${threadId}`);
+
+      expect(response.status).toEqual(200);
+      expect(response.body.status).toEqual('success');
+      expect(response.body.data.thread.comments[0].likeCount).toEqual(2);
     });
   });
 
