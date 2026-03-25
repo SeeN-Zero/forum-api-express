@@ -1,35 +1,30 @@
-# Forum API
+# Forum API Express
 
-TEST CI
+REST API forum diskusi berbasis Node.js dengan pendekatan Clean Architecture.  
+Fitur utama: registrasi user, autentikasi JWT, thread, komentar, balasan, dan like komentar.
 
-REST API forum diskusi berbasis Node.js dengan pendekatan **Clean Architecture**.  
-Project ini mencakup fitur autentikasi, thread, komentar, balasan, dan like komentar, dengan PostgreSQL sebagai database.
-
-## Tech Stack
-
+## Stack
 - Node.js (ES Modules)
 - Express.js
 - PostgreSQL (`pg`)
-- JSON Web Token (`jsonwebtoken`)
+- JWT (`jsonwebtoken`)
 - Bcrypt (`bcrypt`)
-- Vitest + Supertest
-- Node PG Migrate
-- PM2 (untuk process manager di server)
+- Migration: `node-pg-migrate`
+- Testing: Vitest + Supertest
+- Process manager: PM2
 
-## Arsitektur
-
-Project mengikuti pemisahan layer:
-
+## Clean Architecture
+Pemisahan layer:
 - `Domains`: entity dan kontrak repository
-- `Applications`: use case (business logic)
-- `Infrastructures`: implementasi repository PostgreSQL, container DI, HTTP server
-- `Interfaces`: route dan handler HTTP
+- `Applications`: use case (business rules)
+- `Infrastructures`: implementasi teknis (PostgreSQL, container DI, server)
+- `Interfaces`: route + handler HTTP
+- `Commons`: shared concerns (error translation, config, dll)
 
 Alur request:
-`Route -> Handler -> Use Case -> Repository -> Database`
+`Route -> Handler -> Use Case -> Repository -> PostgreSQL`
 
-## Struktur Folder Utama
-
+## Struktur Direktori
 ```txt
 src/
   Applications/
@@ -39,48 +34,60 @@ src/
   Interfaces/
 migrations/
 tests/
+.github/workflows/
 ```
 
 ## Prasyarat
-
-- Node.js 20+ (disarankan LTS terbaru)
+- Node.js 20+ (disarankan LTS)
 - PostgreSQL aktif
 - npm
 
-## Setup Lokal
+## Environment Variables
+Project membaca konfigurasi dari environment:
 
-1. Install dependency:
+```env
+HOST=localhost
+PORT=5000
+
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=forumapi
+PGUSER=postgres
+PGPASSWORD=postgres
+
+ACCESS_TOKEN_KEY=secret
+REFRESH_TOKEN_KEY=secret
+ACCESS_TOKEN_AGE=3000
+```
+
+Untuk testing lokal, buat file `.env.test` (jangan commit ke repository) dengan nilai test database, contoh:
+
+```env
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=forumapi_test
+PGUSER=postgres
+PGPASSWORD=postgres
+
+ACCESS_TOKEN_KEY=secret
+REFRESH_TOKEN_KEY=secret
+ACCESS_TOKEN_AGE=3000
+```
+
+## Menjalankan Aplikasi
+Install dependency:
 
 ```bash
 npm install
 ```
 
-2. Siapkan environment:
-
-- Copy `.env` sesuai kebutuhan environment lokal
-- Copy `.env.test` untuk environment testing
-
-Variabel penting:
-
-- `HOST`
-- `PORT`
-- `PGHOST`
-- `PGPORT`
-- `PGUSER`
-- `PGPASSWORD`
-- `PGDATABASE`
-- `DATABASE_URL`
-- `ACCESS_TOKEN_KEY`
-- `REFRESH_TOKEN_KEY`
-- `ACCESS_TOKEN_AGE`
-
-3. Jalankan migrasi database:
+Jalankan migrasi:
 
 ```bash
 npm run migrate:up
 ```
 
-4. Jalankan aplikasi:
+Start app:
 
 ```bash
 npm run start
@@ -92,9 +99,15 @@ Mode development:
 npm run start:dev
 ```
 
-## Scripts
+Entry point:
+- `src/app.js`
 
+## Scripts Penting
 ```bash
+# app
+npm run start
+npm run start:dev
+
 # testing
 npm test
 npm run test:watch
@@ -105,58 +118,75 @@ npm run test:functional
 # migration
 npm run migrate:up
 npm run migrate:down
+npm run migrate:down:step
+npm run migrate:test
 npm run migrate:test:up
 npm run migrate:test:down
+npm run migrate:test:down:step
 
 # lint
 npm run lint
 ```
 
-## Endpoint API
-
+## Daftar Endpoint
 ### Users
-
-- `POST /users` -> registrasi user
+- `POST /users` register user
 
 ### Authentications
-
-- `POST /authentications` -> login (access token + refresh token)
-- `PUT /authentications` -> refresh access token
-- `DELETE /authentications` -> logout (hapus refresh token)
+- `POST /authentications` login
+- `PUT /authentications` refresh access token
+- `DELETE /authentications` logout
 
 ### Threads
+- `POST /threads` (auth)
+- `GET /threads/:threadId`
 
-- `POST /threads` (auth) -> buat thread
-- `GET /threads/:threadId` -> detail thread
-- `POST /threads/:threadId/comments` (auth) -> tambah komentar
-- `DELETE /threads/:threadId/comments/:commentId` (auth) -> hapus komentar (soft delete)
-- `PUT /threads/:threadId/comments/:commentId/likes` (auth) -> toggle like komentar
-- `POST /threads/:threadId/comments/:commentId/replies` (auth) -> tambah balasan
-- `DELETE /threads/:threadId/comments/:commentId/replies/:replyId` (auth) -> hapus balasan (soft delete)
+### Comments
+- `POST /threads/:threadId/comments` (auth)
+- `DELETE /threads/:threadId/comments/:commentId` (auth)
+- `PUT /threads/:threadId/comments/:commentId/likes` (auth)
 
-## Testing
+### Replies
+- `POST /threads/:threadId/comments/:commentId/replies` (auth)
+- `DELETE /threads/:threadId/comments/:commentId/replies/:replyId` (auth)
 
-Project memiliki tiga lapisan pengujian:
-
-- Unit test: validasi domain/use case secara terisolasi
-- Integration test: validasi repository dengan PostgreSQL nyata
-- Functional test: validasi end-to-end via HTTP menggunakan Supertest
+## Testing Strategy
+Semua test menggunakan Vitest:
+- Unit test: domain, use case, helper
+- Integration test: repository + PostgreSQL asli (tanpa mock DB)
+- Functional test: HTTP endpoint end-to-end via Supertest
 
 Catatan:
-
-- Integration dan functional test menggunakan `NODE_ENV=test`
-- Migration test dijalankan melalui script `migrate:test:up`
-- Database test dibersihkan menggunakan helper di folder `tests/`
+- Integration/functional test berjalan dengan `NODE_ENV=test`
+- Migration test dijalankan sebelum integration/functional test
+- Tabel test dibersihkan via helper di folder `tests/`
 
 ## CI/CD
+### CI (`.github/workflows/ci.yml`)
+Trigger:
+- Pull Request ke `main` atau `master`
 
-- CI: workflow `.github/workflows/ci.yml`
-  - unit test
-  - integration test
-  - functional test
-- CD: workflow `.github/workflows/cd.yml`
-  - deploy ke VM via SSH
-  - `npm install`
-  - `npm run migrate:up`
-  - `pm2 restart app || pm2 start npm --name "app" -- start`
+Jobs:
+- Unit test + coverage threshold 100%
+- Integration test (PostgreSQL service container)
+- Functional test (PostgreSQL service container)
+
+### CD (`.github/workflows/cd.yml`)
+Trigger:
+- Push ke `main` atau `master`
+
+Deploy flow (via `appleboy/ssh-action`):
+1. SSH ke VM
+2. Masuk ke `${APP_DIR}/forum-api-express`
+3. `git fetch/checkout/pull` sesuai branch
+4. `npm install`
+5. `npm run migrate:up`
+6. `pm2 restart app || pm2 start npm --name "app" -- start`
+7. `pm2 save`
+
+Secrets yang dibutuhkan:
+- `SSH_HOST`
+- `SSH_USER`
+- `SSH_PRIVATE_KEY`
+- `APP_DIR`
 

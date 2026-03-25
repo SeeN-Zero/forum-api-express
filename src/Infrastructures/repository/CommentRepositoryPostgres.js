@@ -79,10 +79,10 @@ class CommentRepositoryPostgres extends CommentRepository {
         SELECT
           comments.id,
           users.username,
-          comments.date::text AS date,
+          to_char(comments.date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS date,
           comments.content,
-          comments.is_delete,
-          COALESCE(COUNT(user_comment_likes.id), 0)::int AS like_count
+          comments.is_delete AS "isDelete",
+          COALESCE(COUNT(user_comment_likes.id), 0)::int AS "likeCount"
         FROM comments
         JOIN users ON users.id = comments.owner
         LEFT JOIN user_comment_likes ON user_comment_likes.comment_id = comments.id
@@ -94,14 +94,7 @@ class CommentRepositoryPostgres extends CommentRepository {
 
     const result = await this._pool.query(query);
 
-    return result.rows.map((row) => ({
-      id: row.id,
-      username: row.username,
-      date: new Date(row.date).toISOString(),
-      content: row.content,
-      isDelete: row.is_delete,
-      likeCount: Number(row.like_count),
-    }));
+    return result.rows;
   }
 }
 

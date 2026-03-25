@@ -1,4 +1,5 @@
 import InvariantError from './InvariantError.js';
+import AuthorizationError from './AuthorizationError.js';
 
 const DomainErrorTranslator = {
   translate(error) {
@@ -23,6 +24,8 @@ DomainErrorTranslator._directories = {
   'NEW_COMMENT.NOT_MEET_DATA_TYPE_SPECIFICATION': new InvariantError('tidak dapat membuat komentar baru karena tipe data tidak sesuai'),
   'NEW_REPLY.NOT_CONTAIN_NEEDED_PROPERTY': new InvariantError('tidak dapat membuat balasan baru karena properti yang dibutuhkan tidak ada'),
   'NEW_REPLY.NOT_MEET_DATA_TYPE_SPECIFICATION': new InvariantError('tidak dapat membuat balasan baru karena tipe data tidak sesuai'),
+  'DELETE_COMMENT_USE_CASE.NOT_AUTHORIZED': new AuthorizationError('anda tidak berhak mengakses resource ini'),
+  'DELETE_REPLY_USE_CASE.NOT_AUTHORIZED': new AuthorizationError('anda tidak berhak mengakses resource ini'),
 };
 
 export default DomainErrorTranslator;
