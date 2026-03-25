@@ -24,6 +24,20 @@ describe('HTTP server - authentications', () => {
     await AuthenticationsTableTestHelper.cleanTable();
   });
 
+  describe('when POST /authentications', () => {
+    it('should return 400 when login payload not contain needed property', async () => {
+      const app = await createServer(container);
+
+      const response = await request(app).post('/authentications').send({
+        username: 'dicoding',
+      });
+
+      expect(response.status).toEqual(400);
+      expect(response.body.status).toEqual('fail');
+      expect(response.body.message).toEqual('harus mengirimkan username dan password');
+    });
+  });
+
   describe('when PUT /authentications', () => {
     it('should return 200 and new access token', async () => {
       const app = await createServer(container);

@@ -1,5 +1,3 @@
-import AuthorizationError from '../../Commons/exceptions/AuthorizationError.js';
-
 class DeleteReplyUseCase {
   constructor({ threadRepository, commentRepository, replyRepository }) {
     this._threadRepository = threadRepository;
@@ -18,7 +16,7 @@ class DeleteReplyUseCase {
     const replyOwner = await this._replyRepository.getReplyOwnerById(replyId);
 
     if (replyOwner !== owner) {
-      throw new AuthorizationError('anda tidak berhak mengakses resource ini');
+      throw new Error('DELETE_REPLY_USE_CASE.NOT_AUTHORIZED');
     }
 
     await this._replyRepository.softDeleteReply(replyId);

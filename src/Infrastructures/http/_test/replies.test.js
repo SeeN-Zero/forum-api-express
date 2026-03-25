@@ -119,4 +119,90 @@ describe('HTTP server - replies', () => {
       expect(response.body.message).toEqual('tidak dapat membuat balasan baru karena properti yang dibutuhkan tidak ada');
     });
   });
+
+  describe('when DELETE /threads/{threadId}/comments/{commentId}/replies/{replyId}', () => {
+    it('should response 200 when delete reply success', async () => {
+      const threadPayload = {
+        title: 'judul thread',
+        body: 'isi thread',
+      };
+      const commentPayload = {
+        content: 'isi komentar',
+      };
+      const replyPayload = {
+        content: 'isi balasan',
+      };
+      const app = await createServer(container);
+      const accessToken = await getAccessToken(app);
+      const addThreadResponse = await request(app)
+        .post('/threads')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send(threadPayload);
+      const threadId = addThreadResponse.body.data.addedThread.id;
+      const addCommentResponse = await request(app)
+        .post(`/threads/${threadId}/comments`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send(commentPayload);
+      const commentId = addCommentResponse.body.data.addedComment.id;
+      const addReplyResponse = await request(app)
+        .post(`/threads/${threadId}/comments/${commentId}/replies`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send(replyPayload);
+      const replyId = addReplyResponse.body.data.addedReply.id;
+
+      const response = await request(app)
+        .delete(`/threads/${threadId}/comments/${commentId}/replies/${replyId}`)
+        .set('Authorization', `Bearer ${accessToken}`);
+
+      expect(response.status).toEqual(200);
+      expect(response.body.status).toEqual('success');
+    });
+
+    it('should response 403 when user not owner of reply', async () => {
+      const threadPayload = {
+        title: 'judul thread',
+        body: 'isi thread',
+      };
+      const commentPayload = {
+        content: 'isi komentar',
+      };
+      const replyPayload = {
+        content: 'isi balasan',
+      };
+      const app = await createServer(container);
+      const ownerAccessToken = await getAccessToken(app, {
+        username: 'owner',
+        password: 'secret',
+        fullname: 'Owner',
+      });
+      const anotherUserAccessToken = await getAccessToken(app, {
+        username: 'anotheruser',
+        password: 'secret',
+        fullname: 'Another User',
+      });
+      const addThreadResponse = await request(app)
+        .post('/threads')
+        .set('Authorization', `Bearer ${ownerAccessToken}`)
+        .send(threadPayload);
+      const threadId = addThreadResponse.body.data.addedThread.id;
+      const addCommentResponse = await request(app)
+        .post(`/threads/${threadId}/comments`)
+        .set('Authorization', `Bearer ${ownerAccessToken}`)
+        .send(commentPayload);
+      const commentId = addCommentResponse.body.data.addedComment.id;
+      const addReplyResponse = await request(app)
+        .post(`/threads/${threadId}/comments/${commentId}/replies`)
+        .set('Authorization', `Bearer ${ownerAccessToken}`)
+        .send(replyPayload);
+      const replyId = addReplyResponse.body.data.addedReply.id;
+
+      const response = await request(app)
+        .delete(`/threads/${threadId}/comments/${commentId}/replies/${replyId}`)
+        .set('Authorization', `Bearer ${anotherUserAccessToken}`);
+
+      expect(response.status).toEqual(403);
+      expect(response.body.status).toEqual('fail');
+      expect(response.body.message).toEqual('anda tidak berhak mengakses resource ini');
+    });
+  });
 });

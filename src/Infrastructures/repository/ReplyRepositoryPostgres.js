@@ -61,7 +61,13 @@ class ReplyRepositoryPostgres extends ReplyRepository {
   async getRepliesByThreadId(threadId) {
     const query = {
       text: `
-        SELECT replies.id, replies.comment_id, users.username, replies.date::text AS date, replies.content, replies.is_delete
+        SELECT
+          replies.id,
+          replies.comment_id AS "commentId",
+          users.username,
+          to_char(replies.date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS date,
+          replies.content,
+          replies.is_delete AS "isDelete"
         FROM replies
         JOIN comments ON comments.id = replies.comment_id
         JOIN users ON users.id = replies.owner
@@ -72,14 +78,7 @@ class ReplyRepositoryPostgres extends ReplyRepository {
 
     const result = await this._pool.query(query);
 
-    return result.rows.map((row) => ({
-      id: row.id,
-      commentId: row.comment_id,
-      username: row.username,
-      date: new Date(row.date).toISOString(),
-      content: row.content,
-      isDelete: row.is_delete,
-    }));
+    return result.rows;
   }
 }
 
